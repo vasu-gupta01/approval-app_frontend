@@ -8,7 +8,8 @@ import UserService from "../services/user.service";
 import logo from "../images/Beta-HealthcareLG-Trebuchet-MS-font.png";
 
 import FormResult from "./FormResult";
-import Checkbox from "./Checkbox";
+import Moment from "moment";
+import DateTimePicker from "react-datetime-picker";
 
 class Form extends Component {
   _isMounted = false;
@@ -27,6 +28,7 @@ class Form extends Component {
       approvers: [],
       checkedApprovers: new Map(),
       approversValid: false,
+      timeout: null,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -120,6 +122,21 @@ class Form extends Component {
                   </label>
                 </div>
               );
+            case "time":
+              return (
+                <div key={"div_" + field._id} className=" mb-3">
+                  <label className="me-3">{field.name}: </label>
+                  <DateTimePicker
+                    disableClock
+                    value={this.state.timeout}
+                    onChange={(val) => {
+                      this.setState({ timeout: val });
+                      this.handleChange(val, field._id);
+                    }}
+                  />
+                </div>
+              );
+
             default:
               return (
                 <div key={"div_" + field._id} className="form-floating mb-3">
