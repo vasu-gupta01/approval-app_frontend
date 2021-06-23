@@ -31,6 +31,7 @@ class Form extends Component {
       timeout: null,
       validMessages: { name: "Error" },
       validFields: { name: true },
+      departments: [],
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -83,6 +84,12 @@ class Form extends Component {
         this.setState({ approvers: res.data });
       }
     });
+
+    UserService.getDepartments().then((res) => {
+      if (res.data && this._isMounted) {
+        this.setState({ departments: res.data });
+      }
+    });
   }
 
   componentWillUnmount() {
@@ -106,10 +113,10 @@ class Form extends Component {
                     <option selected value="">
                       -- department --
                     </option>
-                    {field.type.options.map((option) => {
+                    {this.state.departments.map((option) => {
                       return (
-                        <option key={"key_" + option} value={option}>
-                          {option}
+                        <option key={"key_" + option._id} value={option.name}>
+                          {option.name}
                         </option>
                       );
                     })}

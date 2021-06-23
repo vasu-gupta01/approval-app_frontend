@@ -7,6 +7,10 @@ class UserService {
   getForm(body) {
     return axios.post(API_URL + "getform", body);
   }
+
+  getDepartments() {
+    return axios.get(API_URL + "getdepartments");
+  }
 }
 
 export default new UserService();
