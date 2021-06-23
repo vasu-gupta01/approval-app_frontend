@@ -29,11 +29,12 @@ class Form extends Component {
       checkedApprovers: new Map(),
       approversValid: false,
       timeout: null,
+      validMessages: { name: "Error" },
+      validFields: { name: true },
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.sendForm = this.sendForm.bind(this);
-    // this.handleCheckedChange = this.handleCheckedChange.bind(this);
     this.handleNameChange = this.handleNameChange.bind(this);
     this.fieldsGenerator = this.fieldsGenerator.bind(this);
   }
@@ -120,6 +121,17 @@ class Form extends Component {
                   >
                     {field.name}
                   </label>
+                  <div
+                    style={{
+                      display: this.state.validFields[field._id]
+                        ? "none"
+                        : "block",
+                    }}
+                  >
+                    <strong className="text-danger m-1">
+                      {this.state.validMessages[field._id]}
+                    </strong>
+                  </div>
                 </div>
               );
             case "time":
@@ -134,6 +146,17 @@ class Form extends Component {
                       this.handleChange(val, field._id);
                     }}
                   />
+                  <div
+                    style={{
+                      display: this.state.validFields[field._id]
+                        ? "none"
+                        : "block",
+                    }}
+                  >
+                    <strong className="text-danger m-1">
+                      {this.state.validMessages[field._id]}
+                    </strong>
+                  </div>
                 </div>
               );
 
@@ -143,6 +166,7 @@ class Form extends Component {
                   <input
                     key={field._id}
                     type="text"
+                    autoComplete="off"
                     className="form-control"
                     id="floatingInput"
                     placeholder={field.name}
@@ -157,6 +181,17 @@ class Form extends Component {
                   >
                     {field.name}
                   </label>
+                  <div
+                    style={{
+                      display: this.state.validFields[field._id]
+                        ? "none"
+                        : "block",
+                    }}
+                  >
+                    <strong className="text-danger m-1">
+                      {this.state.validMessages[field._id]}
+                    </strong>
+                  </div>
                 </div>
               );
           }
@@ -166,6 +201,7 @@ class Form extends Component {
               <input
                 key={field._id}
                 type="text"
+                autoComplete="off"
                 className="form-control"
                 id="floatingInput"
                 placeholder={field.name}
@@ -178,6 +214,15 @@ class Form extends Component {
               >
                 {field.name}
               </label>
+              <div
+                style={{
+                  display: this.state.validFields[field._id] ? "none" : "block",
+                }}
+              >
+                <strong className="text-danger m-1">
+                  {this.state.validMessages[field._id]}
+                </strong>
+              </div>
             </div>
           );
         }
@@ -190,43 +235,45 @@ class Form extends Component {
   sendForm = (e) => {
     e.preventDefault();
     //const date = new Date().getTime();
-    const checked_approvers = this.state.checkedApprovers;
+    if (this.validateForm()) {
+      const checked_approvers = this.state.checkedApprovers;
 
-    let vapproval = [];
+      let vapproval = [];
 
-    for (let approver of checked_approvers.keys()) {
-      if (checked_approvers.get(approver) === true) {
-        vapproval.push(approver);
+      for (let approver of checked_approvers.keys()) {
+        if (checked_approvers.get(approver) === true) {
+          vapproval.push(approver);
+        }
       }
-    }
 
-    const form = {
-      filled_by: this.state.filled_by,
-      form_id: this.state.formID,
-      form_title: this.state.name,
-      fields: this.state.formFields,
-      approved: false,
-      date_approved: null,
-      approval: this.state.approvers,
-      department: this.state.department,
-    };
+      const form = {
+        filled_by: this.state.filled_by,
+        form_id: this.state.formID,
+        form_title: this.state.name,
+        fields: this.state.formFields,
+        approved: false,
+        date_approved: null,
+        approval: this.state.approvers,
+        department: this.state.department,
+      };
 
-    let error = false;
+      let error = false;
 
-    if (form.fields) {
-      axios
-        .post("/api/sendform", form)
-        .then()
-        .catch((err) => {
-          error = true;
-          console.log(err);
-        });
-    } else {
-      console.log("input fields are required");
-    }
+      if (form.fields) {
+        axios
+          .post("/api/sendform", form)
+          .then()
+          .catch((err) => {
+            error = true;
+            console.log(err);
+          });
+      } else {
+        console.log("input fields are required");
+      }
 
-    if (!error) {
-      this.setState({ done: true });
+      if (!error) {
+        this.setState({ done: true });
+      }
     }
   };
 
@@ -247,31 +294,16 @@ class Form extends Component {
   };
 
   handleDeptChange = (value) => {
+    let data = this.state.formFields;
+
+    for (let field of data) {
+      if (field.name === "Department") {
+        field.value = value;
+      }
+    }
     this.setState({ department: value });
+    this.setState({ formFields: data });
   };
-
-  handleValidation = (e) => {
-    var forms = document.querySelectorAll(".needs-validation");
-
-    Array.prototype.slice.call(forms).array.forEach((form) => {
-      form.addEventListener(
-        "submit",
-        (event) => {
-          if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-          }
-
-          form.classList.add("was-validated");
-        },
-        false
-      );
-    });
-  };
-
-  errorClass(error) {
-    return error ? "is-invalid" : "";
-  }
 
   // handleCheckedChange(e) {
   //   const item = e.target.value;
@@ -281,7 +313,34 @@ class Form extends Component {
   //   }));
   // }
 
-  validateForm() {}
+  validateForm() {
+    let valid_messages = this.state.validMessages;
+    let valid_fields = this.state.validFields;
+
+    let valid = true;
+
+    if (this.state.filled_by === "") {
+      valid_fields["name"] = false;
+      valid_messages["name"] = "This field is required.";
+      valid = false;
+    } else {
+      valid_fields["name"] = true;
+    }
+
+    for (let field of this.state.formFields) {
+      if (field.required && field.value === "") {
+        valid_fields[field._id] = false;
+        valid_messages[field._id] = "This field is required.";
+        valid = false;
+      } else {
+        valid_fields[field._id] = true;
+      }
+    }
+
+    this.setState({ validMessages: valid_messages, validFields: valid_fields });
+
+    return valid;
+  }
 
   render() {
     if (this.props.id === "-1") {
@@ -304,6 +363,7 @@ class Form extends Component {
             <div className="form-floating mb-3">
               <input
                 type="text"
+                autoComplete="off"
                 className="form-control"
                 id="floatingInput"
                 placeholder="Employee Name"
@@ -314,6 +374,15 @@ class Form extends Component {
               <label className="text-muted" htmlFor="floatingInput">
                 Employee Name
               </label>
+              <div
+                style={{
+                  display: this.state.validFields["name"] ? "none" : "block",
+                }}
+              >
+                <strong className="text-danger m-1">
+                  {this.state.validMessages["name"]}
+                </strong>
+              </div>
             </div>
             {this.fieldsGenerator(fields)}
           </div>
