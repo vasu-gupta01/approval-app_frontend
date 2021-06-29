@@ -55,6 +55,7 @@ class Form extends Component {
       this.setState({ formID: form_id });
       UserService.getForm({ id: this.props.id }).then((res) => {
         vname = res.data.name;
+
         vformFields = res.data.fields;
 
         this.setState({
@@ -65,7 +66,7 @@ class Form extends Component {
         });
 
         for (let i = 0; i < vformFields.length; i++) {
-          dataArray[vformFields[i].name] = "";
+          dataArray[vformFields[i]._id] = "";
           vformFields[i].value = "";
         }
       });
@@ -101,14 +102,16 @@ class Form extends Component {
       return fields.map((field) => {
         if (field.type) {
           switch (field.type.name) {
-            case "select":
+            case "department-select":
               return (
                 <div key={"div_" + field._id} className="form-floating mb-3">
                   <select
                     className="form-select"
                     id="floatingSelect"
                     aria-label="Floating label"
-                    onChange={(e) => this.handleDeptChange(e.target.value)}
+                    onChange={(e) =>
+                      this.handleChange(e.target.value, field._id)
+                    }
                   >
                     <option selected value="">
                       -- department --
@@ -147,9 +150,9 @@ class Form extends Component {
                   <label className="me-3">{field.name}: </label>
                   <DateTimePicker
                     disableClock
-                    value={this.state.timeout}
+                    value={this.state.formData[field._id]}
                     onChange={(val) => {
-                      this.setState({ timeout: val });
+                      // this.setState({ timeout: val });
                       this.handleChange(val, field._id);
                     }}
                   />
@@ -242,6 +245,10 @@ class Form extends Component {
   sendForm = (e) => {
     e.preventDefault();
     //const date = new Date().getTime();
+    this.state.formFields.map((f) => {
+      f.value = this.state.formData[f._id];
+    });
+
     if (this.validateForm()) {
       const checked_approvers = this.state.checkedApprovers;
 
@@ -285,15 +292,11 @@ class Form extends Component {
   };
 
   handleChange = (value, id) => {
-    let data = this.state.formFields;
+    let data = this.state.formData;
 
-    for (let field of data) {
-      if (field._id === id) {
-        field.value = value;
-      }
-    }
+    data[id] = value;
 
-    this.setState({ formFields: data });
+    this.setState({ formData: data });
   };
 
   handleNameChange = (value) => {
@@ -332,6 +335,14 @@ class Form extends Component {
       valid = false;
     } else {
       valid_fields["name"] = true;
+    }
+
+    if (this.state.department === "") {
+      valid_fields["department"] = false;
+      valid_messages["department"] = "This field is required.";
+      valid = false;
+    } else {
+      valid_fields["department"] = true;
     }
 
     for (let field of this.state.formFields) {
@@ -381,6 +392,7 @@ class Form extends Component {
               <label className="text-muted" htmlFor="floatingInput">
                 Employee Name
               </label>
+
               <div
                 style={{
                   display: this.state.validFields["name"] ? "none" : "block",
@@ -388,6 +400,39 @@ class Form extends Component {
               >
                 <strong className="text-danger m-1">
                   {this.state.validMessages["name"]}
+                </strong>
+              </div>
+            </div>
+            <div className="form-floating mb-3">
+              <select
+                className="form-select"
+                id="floatingSelect"
+                aria-label="Floating label"
+                onChange={(e) => this.handleDeptChange(e.target.value)}
+              >
+                <option selected value="">
+                  -- department --
+                </option>
+                {this.state.departments.map((option) => {
+                  return (
+                    <option key={"key_" + option._id} value={option.name}>
+                      {option.name}
+                    </option>
+                  );
+                })}
+              </select>
+              <label htmlFor="floatingSelect" className="text-muted">
+                Department
+              </label>
+              <div
+                style={{
+                  display: this.state.validFields["department"]
+                    ? "none"
+                    : "block",
+                }}
+              >
+                <strong className="text-danger m-1">
+                  {this.state.validMessages["department"]}
                 </strong>
               </div>
             </div>
