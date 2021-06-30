@@ -151,6 +151,7 @@ class Form extends Component {
                   <DateTimePicker
                     disableClock
                     value={this.state.formData[field._id]}
+                    minDate={new Date()}
                     onChange={(val) => {
                       // this.setState({ timeout: val });
                       this.handleChange(val, field._id);
