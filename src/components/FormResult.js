@@ -34,16 +34,21 @@ function FormResult(props) {
       </div>
     </Modal>
   ) : (
-    <div className="container container-form alert alert-danger" role="alert">
-      <h5 className="alert-heading">Submission failed</h5>
-      <hr />
-      <p className="mb-0">
-        <Link className="btn btn-primary" to="/">
-          Click here
-        </Link>{" "}
-        to fill another form
-      </p>
-    </div>
+    <Modal show={isOpen} dialogClassName="modal-dialog-centered">
+      <div className="">
+        <Modal.Header>
+          <Modal.Title className="text-danger bg-gradient">
+            Connection Failure!
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>An error occured please try again later.</Modal.Body>
+        <Modal.Footer as="footer">
+          <Link className="btn btn-outline-dark" to="/">
+            Go to homepage
+          </Link>
+        </Modal.Footer>
+      </div>
+    </Modal>
   );
 }
 

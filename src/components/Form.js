@@ -10,6 +10,7 @@ import logo from "../images/Beta-HealthcareLG-Trebuchet-MS-font.png";
 import FormResult from "./FormResult";
 import Moment from "moment";
 import DateTimePicker from "react-datetime-picker";
+import Loading from "./Loading";
 
 class Form extends Component {
   _isMounted = false;
@@ -29,9 +30,11 @@ class Form extends Component {
       checkedApprovers: new Map(),
       approversValid: false,
       timeout: null,
+      fieldsLoading: true,
       validMessages: { name: "Error" },
       validFields: { name: true },
       departments: [],
+      formSuccess: true,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -53,23 +56,35 @@ class Form extends Component {
 
     if (form_id && this._isMounted) {
       this.setState({ formID: form_id });
-      UserService.getForm({ id: this.props.id }).then((res) => {
-        vname = res.data.name;
+      UserService.getForm({ id: this.props.id })
+        .then((res) => {
+          if (res.data) {
+            vname = res.data.name;
 
-        vformFields = res.data.fields;
+            vformFields = res.data.fields;
 
-        this.setState({
-          name: vname,
-          filled_by: vfilledBy,
-          formFields: vformFields,
-          formData: dataArray,
+            this.setState({
+              name: vname,
+              filled_by: vfilledBy,
+              formFields: vformFields,
+              formData: dataArray,
+            });
+
+            for (let i = 0; i < vformFields.length; i++) {
+              dataArray[vformFields[i]._id] = "";
+              vformFields[i].value = "";
+            }
+            this.setState({ fieldsLoading: false });
+          } else {
+            this.setState({ fieldsLoading: true });
+          }
+        })
+        .catch((e) => {
+          this.setState({ fieldsLoading: false });
+          this.setState({ formSuccess: false }, () => {
+            this.setState({ done: true });
+          });
         });
-
-        for (let i = 0; i < vformFields.length; i++) {
-          dataArray[vformFields[i]._id] = "";
-          vformFields[i].value = "";
-        }
-      });
     }
     // for (let i = 0; i < dbForms.length; i++) {
     //   if (dbForms[i]._id === this.props.id) {
@@ -280,6 +295,7 @@ class Form extends Component {
           .then()
           .catch((err) => {
             error = true;
+            this.setState({ formSuccess: false });
             console.log(err);
           });
       } else {
@@ -369,7 +385,9 @@ class Form extends Component {
     const fields = this.state.formFields;
     const approvers = this.state.approvers;
 
-    return (
+    return this.state.fieldsLoading ? (
+      <Loading />
+    ) : (
       <div className="container-form">
         <form className="card bg-light bg-gradient" autoComplete="off">
           <div className="row card-body">
@@ -476,7 +494,7 @@ class Form extends Component {
               Submit
             </button>
           </div>
-          <FormResult success={true} show={this.state.done} />
+          <FormResult success={this.state.formSuccess} show={this.state.done} />
         </form>
       </div>
     );
